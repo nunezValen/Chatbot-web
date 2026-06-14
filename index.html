@@ -303,13 +303,9 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            body: {
-                                data: {
-                                    from: this.sessionId,
-                                    body: text
-                                }
-                            }
-                        })
+  from: this.sessionId,
+  text: text
+})
                     });
 
                 } catch (error) {
