@@ -297,8 +297,10 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            from: this.sessionId,
-                            body: text
+                            data: {
+                                from: this.sessionId,
+                                body: text
+                            }
                         })
                     });
 
