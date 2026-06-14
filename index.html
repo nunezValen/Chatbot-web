@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sofía - CSFI Propiedades</title>
+    <title>Bot - CSFI Propiedades</title>
     <!-- Librería de Ably -->
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
@@ -168,7 +168,7 @@
 
     <div id="csfi-chat-root">
         <header class="csfi-chat-header">
-            <h1>🤖 Sofía - CSFI Propiedades</h1>
+            <h1>🤖 Bot - CSFI Propiedades</h1>
             <p>Asistente virtual inmobiliario</p>
         </header>
 
@@ -177,7 +177,7 @@
         </main>
 
         <div id="csfi-chat-typing-indicator" class="csfi-chat-typing" style="padding: 0 20px;">
-            Sofía está escribiendo...
+            Bot está escribiendo...
         </div>
 
         <footer class="csfi-chat-input-area">
@@ -309,7 +309,7 @@
                                     body: text
                                 }
                             }
-                        }
+                        )
                     });
 
                 } catch (error) {
@@ -372,7 +372,7 @@
             }
 
             addInitialMessage() {
-                const initialText = '🤖 Hola, soy Sofía, asistente virtual de CSFI Propiedades. ¿Qué propiedad estás buscando?';
+                const initialText = '🤖 Hola, soy un asistente virtual de CSFI Propiedades. ¿Qué propiedad estás buscando?';
                 this.addMessage('assistant', initialText);
             }
         }
