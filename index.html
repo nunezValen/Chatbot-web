@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sofía - CSFI Propiedades</title>
+    <style>
+        /* Scoped Styles for CSFI Chat - DARK THEME */
+        #csfi-chat-root {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #f1f5f9;
+            max-width: 800px;
+            margin: 20px auto;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            background: #0f172a;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+        }
+
+        .csfi-chat-header {
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 16px 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .csfi-chat-header h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .csfi-chat-header p {
+            margin: 4px 0 0 0;
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        .csfi-chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background-color: #0f172a;
+        }
+
+        .csfi-chat-message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .csfi-chat-assistant {
+            align-self: flex-start;
+            background-color: #334155;
+            color: #f1f5f9;
+            border-bottom-left-radius: 4px;
+        }
+
+        .csfi-chat-user {
+            align-self: flex-end;
+            background-color: #2563eb;
+            color: #ffffff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .csfi-chat-typing {
+            font-style: italic;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            display: none;
+        }
+
+        .csfi-chat-input-area {
+            padding: 16px;
+            border-top: 1px solid #334155;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            background-color: #1e293b;
+        }
+
+        .csfi-chat-input {
+            flex: 1;
+            border: 1px solid #475569;
+            background-color: #0f172a;
+            color: #f1f5f9;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: none;
+            max-height: 150px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .csfi-chat-input::placeholder {
+            color: #64748b;
+        }
+
+        .csfi-chat-input:focus {
+            border-color: #2563eb;
+        }
+
+        .csfi-chat-send {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .csfi-chat-send:hover {
+            background-color: #1d4ed8;
+        }
+
+        .csfi-chat-send:disabled {
+            background-color: #475569;
+            cursor: not-allowed;
+        }
+
+        /* Markdown-like simple styles for bot responses */
+        .csfi-chat-message p { margin: 0 0 8px 0; }
+        .csfi-chat-message p:last-child { margin-bottom: 0; }
+
+        /* Scrollbar styling */
+        .csfi-chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .csfi-chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .csfi-chat-container::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        .csfi-chat-container::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        @media (max-width: 640px) {
+            #csfi-chat-root {
+                margin: 0;
+                height: 100vh;
+                border-radius: 0;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="csfi-chat-root">
+        <header class="csfi-chat-header">
+            <h1>🤖 Sofía - CSFI Propiedades</h1>
+            <p>Asistente virtual inmobiliario</p>
+        </header>
+
+        <main class="csfi-chat-container" id="csfi-chat-messages">
+            <!-- Messages will be injected here -->
+        </main>
+
+        <div id="csfi-chat-typing-indicator" class="csfi-chat-typing" style="padding: 0 20px;">
+            Sofía está escribiendo...
+        </div>
+
+        <footer class="csfi-chat-input-area">
+            <textarea 
+                class="csfi-chat-input" 
+                id="csfi-chat-input" 
+                placeholder="Escribe tu mensaje aquí..." 
+                rows="1"
+            ></textarea>
+            <button class="csfi-chat-send" id="csfi-chat-send">
+                Enviar
+            </button>
+        </footer>
+    </div>
+
+    <script>
+        class ChatWidget {
+            constructor() {
+                this.endpoint = 'https://n8n-vete.onrender.com/webhook/whatsapp';
+                this.messagesContainer = document.getElementById('csfi-chat-messages');
+                this.inputField = document.getElementById('csfi-chat-input');
+                this.sendButton = document.getElementById('csfi-chat-send');
+                this.typingIndicator = document.getElementById('csfi-chat-typing-indicator');
+                this.history = [];
+                this.sessionId = this.initSession();
+                
+                this.initEventListeners();
+                this.loadConversation();
+                
+                if (this.history.length === 0) {
+                    this.addInitialMessage();
+                } else {
+                    this.renderHistory();
+                }
+            }
+
+            initSession() {
+                let sessionId = localStorage.getItem('csfi-session-id');
+                if (!sessionId) {
+                    sessionId = 'demo-' + crypto.randomUUID();
+                    localStorage.setItem('csfi-session-id', sessionId);
+                }
+                return sessionId;
+            }
+
+            initEventListeners() {
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                
+                this.inputField.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                // Auto-resize textarea
+                this.inputField.addEventListener('input', () => {
+                    this.inputField.style.height = 'auto';
+                    this.inputField.style.height = (this.inputField.scrollHeight) + 'px';
+                });
+            }
+
+            async sendMessage() {
+                const text = this.inputField.value.trim();
+                if (!text) return;
+
+                // Disable input during sending
+                this.inputField.value = '';
+                this.inputField.style.height = 'auto';
+                this.inputField.disabled = true;
+                this.sendButton.disabled = true;
+
+                // Add user message to UI and history
+                this.addMessage('user', text);
+                
+                // Show typing indicator
+                this.renderTypingIndicator(true);
+
+                try {
+                    const response = await fetch(this.endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            body: {
+                                data: {
+                                    from: this.sessionId,
+                                    body: text
+                                }
+                            }
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('Error en la comunicación con el servidor');
+
+                    const data = await response.json();
+                    
+                    this.renderTypingIndicator(false);
+                    
+                    if (data && data.reply) {
+                        this.addMessage('assistant', data.reply);
+                    } else {
+                        this.addMessage('assistant', 'Lo siento, no pude procesar tu solicitud en este momento.');
+                    }
+
+                } catch (error) {
+                    console.error('Chat Error:', error);
+                    this.renderTypingIndicator(false);
+                    this.addMessage('assistant', 'Hubo un problema de conexión. Por favor, intenta de nuevo más tarde.');
+                } finally {
+                    this.inputField.disabled = false;
+                    this.sendButton.disabled = false;
+                    this.inputField.focus();
+                }
+            }
+
+            addMessage(role, text) {
+                const messageObj = { role, text };
+                this.history.push(messageObj);
+                this.renderMessage(messageObj);
+                this.saveConversation();
+                this.scrollToBottom();
+            }
+
+            renderMessage(msg) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('csfi-chat-message');
+                messageElement.classList.add(msg.role === 'user' ? 'csfi-chat-user' : 'csfi-chat-assistant');
+                
+                // Simple newline to <br> conversion
+                messageElement.innerHTML = msg.text.replace(/\n/g, '<br>');
+                
+                this.messagesContainer.appendChild(messageElement);
+            }
+
+            renderTypingIndicator(show) {
+                this.typingIndicator.style.display = show ? 'block' : 'none';
+                if (show) this.scrollToBottom();
+            }
+
+            scrollToBottom() {
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }
+
+            saveConversation() {
+                localStorage.setItem('csfi-chat-history', JSON.stringify(this.history));
+            }
+
+            loadConversation() {
+                const saved = localStorage.getItem('csfi-chat-history');
+                if (saved) {
+                    try {
+                        this.history = JSON.parse(saved);
+                    } catch (e) {
+                        this.history = [];
+                    }
+                }
+            }
+
+            renderHistory() {
+                this.messagesContainer.innerHTML = '';
+                this.history.forEach(msg => this.renderMessage(msg));
+                this.scrollToBottom();
+            }
+
+            addInitialMessage() {
+                const initialText = '🤖 Hola, soy Sofía, asistente virtual de CSFI Propiedades. ¿Qué propiedad estás buscando?';
+                this.addMessage('assistant', initialText);
+            }
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            window.csfiChat = new ChatWidget();
+        });
+    </script>
+</body>
+</html>
