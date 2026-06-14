@@ -11,9 +11,9 @@
       "typeVersion": 2.1,
       "position": [
         -1136,
-        144
+        192
       ],
-      "id": "2c6feaf5-9919-4469-8595-4861cd9ac74c",
+      "id": "af5ee2b4-58b4-4b04-aa2b-dfb4a814f4fd",
       "name": "Recibo mensaje",
       "webhookId": "5fb06164-da2f-4a40-8f9b-69a8fae06660"
     },
@@ -25,9 +25,9 @@
       "typeVersion": 2,
       "position": [
         -448,
-        144
+        192
       ],
-      "id": "9c98c650-5be0-42f4-bb6c-79c76a43c268",
+      "id": "eff28037-742a-458d-ae4e-5e7c9ce9234d",
       "name": "Lo paso a json limpio"
     },
     {
@@ -38,13 +38,13 @@
       "typeVersion": 1,
       "position": [
         -912,
-        368
+        416
       ],
-      "id": "4ce99913-b6cf-49b4-bf55-7c6a67b83a37",
+      "id": "a500a52f-3325-49ad-ba78-5bfbdc6cb1b0",
       "name": "Google Gemini Chat Model1",
       "credentials": {
         "googlePalmApi": {
-          "id": "wtzL8xnXmVLaBUZr",
+          "id": "8yczNlZBKTyCe3xy",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
@@ -58,13 +58,13 @@
       "typeVersion": 1.3,
       "position": [
         -784,
-        368
+        416
       ],
-      "id": "17141c55-9117-4125-9bfc-17efeb738a05",
+      "id": "681fdb5a-cc2a-48f0-8307-6ffaa7ca851b",
       "name": "Postgres Chat Memory",
       "credentials": {
         "postgres": {
-          "id": "PLDCAANiKameaWpJ",
+          "id": "pc8Tsi55tomPCEFJ",
           "name": "Postgres account"
         }
       }
@@ -79,9 +79,9 @@
       "typeVersion": 4.4,
       "position": [
         -656,
-        368
+        416
       ],
-      "id": "8ce2392c-bdf4-4af6-9a83-63811c0f928d",
+      "id": "7bd500d4-acda-45bd-8d41-27c39f4c73b1",
       "name": "Informacion de CSFI"
     },
     {
@@ -140,9 +140,9 @@
       "typeVersion": 3.4,
       "position": [
         -224,
-        144
+        192
       ],
-      "id": "24cd458d-b883-4545-ae7e-49af30d1217f",
+      "id": "a4be5e87-fa25-471d-b15d-f00528e4c453",
       "name": "Switch1"
     },
     {
@@ -155,14 +155,14 @@
       "typeVersion": 2.6,
       "position": [
         0,
-        336
+        384
       ],
-      "id": "0d53103c-ae84-4e4d-88f5-2c013226c06e",
+      "id": "1e5032c7-4394-42a9-8070-236a2bef1983",
       "name": "Execute a SQL query",
       "alwaysOutputData": true,
       "credentials": {
         "postgres": {
-          "id": "PLDCAANiKameaWpJ",
+          "id": "pc8Tsi55tomPCEFJ",
           "name": "Postgres account"
         }
       }
@@ -175,28 +175,36 @@
       "typeVersion": 2,
       "position": [
         448,
-        240
+        288
       ],
-      "id": "26502c9a-c5ae-47d2-941a-44b25cd5fda7",
+      "id": "1c75281a-cea1-4560-bb5e-571b128156a0",
       "name": "Code in JavaScript"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.ultramsg.com/instance164334/messages/chat",
+        "url": "=https://rest.ably.io/channels/propiedades_user_{{ $('Recibo mensaje').item.json.body.data.from }}/messages ",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"token\": \"361bgoubwu6ken42\",\n  \"to\": \"{{ $('Recibo mensaje').item.json.body.data.from }}\",\n  \"body\": {{ JSON.stringify($json.body) }}\n}",
+        "jsonBody": "={\n  \"name\": \"message\",\n  \"data\": {\n    \"text\": {{ JSON.stringify($json.body) }}\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
         672,
-        240
+        288
       ],
-      "id": "cbda1119-d479-4f2d-9b93-c42ed45f29d2",
-      "name": "HTTP Request"
+      "id": "6d7d347c-9ddb-49eb-ba3d-85f0d8ef8aa6",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "fpzkx8144F1T2QbX",
+          "name": "Unnamed credential"
+        }
+      }
     },
     {
       "parameters": {
@@ -227,28 +235,36 @@
       "typeVersion": 2.3,
       "position": [
         224,
-        336
+        384
       ],
-      "id": "fb91c9e6-5f3d-4da0-b1c5-cb93109fcfec",
+      "id": "3a57ecf5-b7c0-446a-880a-4ac8e25b3969",
       "name": "If"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.ultramsg.com/instance164334/messages/chat",
+        "url": "=https://rest.ably.io/channels/propiedades_user_{{ $('Recibo mensaje').item.json.body.data.from }}/messages ",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"token\": \"361bgoubwu6ken42\",\n  \"to\": \"{{ $('Recibo mensaje').item.json.body.data.from }}\",\n  \"body\": \"Actualmente no encontré propiedades con esos criterios. Voy a guardar tu búsqueda y te avisaré automáticamente cuando ingrese una propiedad compatible. Le gustaria consultar otra cosa?\"\n}",
+        "jsonBody": "={\n  \"name\": \"message\",\n  \"data\": {\n    \"text\": \"Actualmente no encontré propiedades con esos criterios. Voy a guardar tu búsqueda y te avisaré automáticamente cuando ingrese una propiedad compatible. Le gustaria consultar otra cosa?\"\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
         448,
-        432
+        480
       ],
-      "id": "43cd00c5-149d-4681-9733-c7e7fdd7c8e7",
-      "name": "HTTP Request1"
+      "id": "5328e315-b455-4430-8b6b-530b2724cb54",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "fpzkx8144F1T2QbX",
+          "name": "Unnamed credential"
+        }
+      }
     },
     {
       "parameters": {
@@ -260,13 +276,13 @@
       "typeVersion": 2.6,
       "position": [
         672,
-        432
+        480
       ],
-      "id": "401ea4ad-cc7c-4ef3-a656-35d616da2481",
+      "id": "f3ae20de-2568-40b6-8b56-4da4c84da0cd",
       "name": "Guardar consulta",
       "credentials": {
         "postgres": {
-          "id": "PLDCAANiKameaWpJ",
+          "id": "pc8Tsi55tomPCEFJ",
           "name": "Postgres account"
         }
       }
@@ -286,13 +302,13 @@
       "typeVersion": 4.4,
       "position": [
         0,
-        -48
+        0
       ],
-      "id": "821b35b3-5f6c-4630-ad4b-43f7d4ec499f",
+      "id": "cb214555-46cb-479f-893d-6defe75ddfca",
       "name": "Mandar mensaje",
       "credentials": {
         "httpBasicAuth": {
-          "id": "Po6NOjwQDLmjiFpN",
+          "id": "fpzkx8144F1T2QbX",
           "name": "Unnamed credential"
         }
       }
@@ -300,20 +316,28 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.ultramsg.com/instance164334/messages/chat",
+        "url": "=https://rest.ably.io/channels/propiedades_user_{{ $('Recibo mensaje').item.json.body.data.from }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"token\": \"361bgoubwu6ken42\",\n  \"to\": \"{{ $('Recibo mensaje').item.json.body.data.from }}\",\n  \"body\": \"Genial! Dame un segundo y comenzare a buscar las propiedades...\"\n}",
+        "jsonBody": "={\n  \"name\": \"message\",\n  \"data\": {\n    \"text\": \"Genial! Dame un segundo y comenzare a buscar las propiedades..\"\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
         0,
-        144
+        192
       ],
-      "id": "245e3676-c3b8-4aeb-88b7-add1c765bb4d",
-      "name": "Avisar que voy a buscar"
+      "id": "8d646a53-c2fa-405c-8088-15ad01f96b1e",
+      "name": "Avisar que voy a buscar",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "fpzkx8144F1T2QbX",
+          "name": "Unnamed credential"
+        }
+      }
     },
     {
       "parameters": {
@@ -325,9 +349,9 @@
       "typeVersion": 3.1,
       "position": [
         -864,
-        144
+        192
       ],
-      "id": "3e055855-1998-4801-bcee-977e701d56ef",
+      "id": "c51a2db8-fc3d-4fc1-bf8c-3b2940dad3cc",
       "name": "AI Agent"
     }
   ],
@@ -472,24 +496,19 @@
           }
         ]
       ]
-    },
-    "Mandar mensaje": {
-      "main": [
-        []
-      ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "025d0c37-73c0-4d4c-84a8-1e6911c77ee9",
+  "versionId": "0ea13478-9b58-4aff-99da-4c7c23925f0b",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "1528cf5208dfddd94cc07c74695ae9dc82ea1341f35e852deb5c1e658f25e0c1"
+    "instanceId": "2ba758f803696833b125f36085b14107fbd105cb60b31539b6589568f710a634"
   },
-  "id": "LMFatFrGDnH8hn84",
+  "id": "PpjdOHHRS61ajtoD",
   "tags": []
 }
