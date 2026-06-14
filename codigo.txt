@@ -1,0 +1,13 @@
+<script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
+
+<script>
+  const ably = new Ably.Realtime("wVhGgQ.vcXxIQ:xqZvl54XUTtKf7I2S0HxWiNIcF_uBvTtamgTDBVXvic");
+
+  const channel = ably.channels.get("propiedades");
+
+  channel.subscribe((msg) => {
+    console.log("Mensaje recibido:", msg.data);
+
+    alert(msg.data);
+  });
+</script>

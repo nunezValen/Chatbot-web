@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sofía - CSFI Propiedades</title>
+    <!-- Librería de Ably -->
+    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
         /* Scoped Styles for CSFI Chat - DARK THEME */
         #csfi-chat-root {
@@ -137,10 +139,6 @@
             cursor: not-allowed;
         }
 
-        /* Markdown-like simple styles for bot responses */
-        .csfi-chat-message p { margin: 0 0 8px 0; }
-        .csfi-chat-message p:last-child { margin-bottom: 0; }
-
         /* Scrollbar styling */
         .csfi-chat-container::-webkit-scrollbar {
             width: 6px;
@@ -198,14 +196,20 @@
     <script>
         class ChatWidget {
             constructor() {
+                // CONFIGURACIÓN PROPORCIONADA
+                this.ablyKey = "wVhGgQ.vcXxIQ:xqZvl54XUTtKf7I2S0HxWiNIcF_uBvTtamgTDBVXvic";
+                this.ablyChannelName = "propiedades";
                 this.endpoint = 'https://n8n-vete.onrender.com/webhook/whatsapp';
+                
                 this.messagesContainer = document.getElementById('csfi-chat-messages');
                 this.inputField = document.getElementById('csfi-chat-input');
                 this.sendButton = document.getElementById('csfi-chat-send');
                 this.typingIndicator = document.getElementById('csfi-chat-typing-indicator');
+                
                 this.history = [];
                 this.sessionId = this.initSession();
                 
+                this.initAbly();
                 this.initEventListeners();
                 this.loadConversation();
                 
@@ -225,6 +229,46 @@
                 return sessionId;
             }
 
+            initAbly() {
+                try {
+                    this.ably = new Ably.Realtime(this.ablyKey);
+                    this.channel = this.ably.channels.get(this.ablyChannelName);
+
+                    this.channel.subscribe((msg) => {
+                        console.log("Ably: Mensaje recibido en canal '" + this.ablyChannelName + "':", msg.data);
+                        
+                        // El formato esperado es que msg.data contenga un campo 'to' con el sessionId
+                        // y el mensaje en 'body' o 'reply'
+                        const data = msg.data;
+                        
+                        // Filtramos para que solo este usuario reciba sus mensajes
+                        if (data.to === this.sessionId) {
+                            this.renderTypingIndicator(false);
+                            
+                            // Extraemos el texto según los formatos conversados
+                            let replyText = "";
+                            if (typeof data.body === 'string') {
+                                replyText = data.body;
+                            } else if (data.body && data.body.reply) {
+                                replyText = data.body.reply;
+                            } else if (data.reply) {
+                                replyText = data.reply;
+                            } else if (typeof data === 'string') {
+                                replyText = data;
+                            }
+
+                            if (replyText) {
+                                this.addMessage('assistant', replyText);
+                            }
+                        }
+                    });
+
+                    this.ably.connection.on('connected', () => console.log('✅ Ably: Conectado.'));
+                } catch (e) {
+                    console.error('❌ Ably Error:', e);
+                }
+            }
+
             initEventListeners() {
                 this.sendButton.addEventListener('click', () => this.sendMessage());
                 
@@ -235,7 +279,6 @@
                     }
                 });
 
-                // Auto-resize textarea
                 this.inputField.addEventListener('input', () => {
                     this.inputField.style.height = 'auto';
                     this.inputField.style.height = (this.inputField.scrollHeight) + 'px';
@@ -246,58 +289,43 @@
                 const text = this.inputField.value.trim();
                 if (!text) return;
 
-                // Disable input during sending
                 this.inputField.value = '';
                 this.inputField.style.height = 'auto';
-                this.inputField.disabled = true;
-                this.sendButton.disabled = true;
-
-                // Add user message to UI and history
-                this.addMessage('user', text);
                 
-                // Show typing indicator
+                this.addMessage('user', text);
                 this.renderTypingIndicator(true);
 
                 try {
-                    const response = await fetch(this.endpoint, {
+                    // Enviamos a n8n. La respuesta llegará por Ably a través del canal 'propiedades'
+                    await fetch(this.endpoint, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            
+                            body: {
                                 data: {
                                     from: this.sessionId,
                                     body: text
                                 }
-                            
+                            }
                         })
                     });
-
-                    if (!response.ok) throw new Error('Error en la comunicación con el servidor');
-
-                    const data = await response.json();
-                    
-                    this.renderTypingIndicator(false);
-                    
-                    if (data && data.reply) {
-                        this.addMessage('assistant', data.reply);
-                    } else {
-                        this.addMessage('assistant', 'Lo siento, no pude procesar tu solicitud en este momento.');
-                    }
 
                 } catch (error) {
                     console.error('Chat Error:', error);
                     this.renderTypingIndicator(false);
-                    this.addMessage('assistant', 'Hubo un problema de conexión. Por favor, intenta de nuevo más tarde.');
-                } finally {
-                    this.inputField.disabled = false;
-                    this.sendButton.disabled = false;
-                    this.inputField.focus();
+                    this.addMessage('assistant', 'Hubo un problema al enviar el mensaje.');
                 }
             }
 
             addMessage(role, text) {
+                // Evitar duplicados por race conditions entre fetch y realtime
+                if (role === 'assistant' && this.history.length > 0) {
+                    const lastMsg = this.history[this.history.length - 1];
+                    if (lastMsg.role === 'assistant' && lastMsg.text === text) return;
+                }
+
                 const messageObj = { role, text };
                 this.history.push(messageObj);
                 this.renderMessage(messageObj);
@@ -309,10 +337,7 @@
                 const messageElement = document.createElement('div');
                 messageElement.classList.add('csfi-chat-message');
                 messageElement.classList.add(msg.role === 'user' ? 'csfi-chat-user' : 'csfi-chat-assistant');
-                
-                // Simple newline to <br> conversion
                 messageElement.innerHTML = msg.text.replace(/\n/g, '<br>');
-                
                 this.messagesContainer.appendChild(messageElement);
             }
 
@@ -352,7 +377,6 @@
             }
         }
 
-        // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
             window.csfiChat = new ChatWidget();
         });
