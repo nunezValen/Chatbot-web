@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bot - CSFI Propiedades</title>
+    <title>Sofía - CSFI Propiedades</title>
     <!-- Librería de Ably -->
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
@@ -168,7 +168,7 @@
 
     <div id="csfi-chat-root">
         <header class="csfi-chat-header">
-            <h1>🤖 Bot - CSFI Propiedades</h1>
+            <h1>🤖 Sofía - CSFI Propiedades</h1>
             <p>Asistente virtual inmobiliario</p>
         </header>
 
@@ -177,7 +177,7 @@
         </main>
 
         <div id="csfi-chat-typing-indicator" class="csfi-chat-typing" style="padding: 0 20px;">
-            Bot está escribiendo...
+            Sofía está escribiendo...
         </div>
 
         <footer class="csfi-chat-input-area">
@@ -196,10 +196,9 @@
     <script>
         class ChatWidget {
             constructor() {
-                // CONFIGURACIÓN PROPORCIONADA
+                // CONFIGURACIÓN
                 this.ablyKey = "wVhGgQ.vcXxIQ:xqZvl54XUTtKf7I2S0HxWiNIcF_uBvTtamgTDBVXvic";
-                this.ablyChannelName = "propiedades";
-                this.endpoint = 'https://n8n-vete.onrender.com/webhook-test/whatsapp';
+                this.endpoint = 'https://n8n-vete.onrender.com/webhook/whatsapp';
                 
                 this.messagesContainer = document.getElementById('csfi-chat-messages');
                 this.inputField = document.getElementById('csfi-chat-input');
@@ -232,34 +231,29 @@
             initAbly() {
                 try {
                     this.ably = new Ably.Realtime(this.ablyKey);
-                    this.channel = this.ably.channels.get(this.ablyChannelName);
+
+                    // ARQUITECTURA CORRECTA: Canal dinámico por usuario
+                    this.channel = this.ably.channels.get(
+                        "propiedades_user_" + this.sessionId
+                    );
 
                     this.channel.subscribe((msg) => {
-                        console.log("Ably: Mensaje recibido en canal '" + this.ablyChannelName + "':", msg.data);
-                        
-                        // El formato esperado es que msg.data contenga un campo 'to' con el sessionId
-                        // y el mensaje en 'body' o 'reply'
-                        const data = msg.data;
-                        
-                        // Filtramos para que solo este usuario reciba sus mensajes
-                        if (data.to === this.sessionId) {
-                            this.renderTypingIndicator(false);
-                            
-                            // Extraemos el texto según los formatos conversados
-                            let replyText = "";
-                            if (typeof data.body === 'string') {
-                                replyText = data.body;
-                            } else if (data.body && data.body.reply) {
-                                replyText = data.body.reply;
-                            } else if (data.reply) {
-                                replyText = data.reply;
-                            } else if (typeof data === 'string') {
-                                replyText = data;
-                            }
+                        console.log("RECIBIDO:", msg.data);
+                        this.renderTypingIndicator(false);
 
-                            if (replyText) {
-                                this.addMessage('assistant', replyText);
-                            }
+                        const data = msg.data;
+                        let replyText = "";
+
+                        if (typeof data.body === "string") {
+                            replyText = data.body;
+                        } else if (data.text) {
+                            replyText = data.text;
+                        } else {
+                            replyText = JSON.stringify(data);
+                        }
+
+                        if (replyText) {
+                            this.addMessage("assistant", replyText);
                         }
                     });
 
@@ -296,20 +290,16 @@
                 this.renderTypingIndicator(true);
 
                 try {
-                    // Enviamos a n8n. La respuesta llegará por Ably a través del canal 'propiedades'
+                    // Enviamos a n8n con el formato simplificado
                     await fetch(this.endpoint, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                           
-                                data: {
-                                    from: this.sessionId,
-                                    body: text
-                                }
-                            }
-                        )
+                            from: this.sessionId,
+                            text: text
+                        })
                     });
 
                 } catch (error) {
@@ -320,7 +310,7 @@
             }
 
             addMessage(role, text) {
-                // Evitar duplicados por race conditions entre fetch y realtime
+                // Evitar duplicados por race conditions
                 if (role === 'assistant' && this.history.length > 0) {
                     const lastMsg = this.history[this.history.length - 1];
                     if (lastMsg.role === 'assistant' && lastMsg.text === text) return;
@@ -372,7 +362,7 @@
             }
 
             addInitialMessage() {
-                const initialText = '🤖 Hola, soy un asistente virtual de CSFI Propiedades. ¿Qué propiedad estás buscando?';
+                const initialText = '🤖 Hola, soy Sofía, asistente virtual de CSFI Propiedades. ¿Qué propiedad estás buscando?';
                 this.addMessage('assistant', initialText);
             }
         }

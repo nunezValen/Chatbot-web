@@ -1,243 +1,59 @@
----
+🧠 OBJETIVO
 
-Quiero crear una demo web para un chatbot inmobiliario de **CSFI Propiedades**.
+Cada usuario recibe SOLO sus mensajes:
 
-## Tecnologías
+user A  ← sus mensajes
+user B  ← sus mensajes
+user C  ← sus mensajes
 
-* HTML
-* CSS
-* JavaScript puro
-* Sin frameworks
-* Sin librerías externas
-* Un único archivo HTML autocontenido
+Sin mezclarse.
 
-## Objetivo
+🚀 ARQUITECTURA CORRECTA (Ably)
 
-La web debe actuar como una interfaz de chat conectada a mi workflow de n8n.
+En vez de usar un solo canal:
 
-## Endpoint
+propiedades ❌ (mezcla todo)
 
-La aplicación debe realizar POST a:
+Usamos:
 
-```text
-https://n8n-vete.onrender.com/webhook/whatsapp
-```
+propiedades_user_{sessionId} ✔
+🌐 1. FRONTEND (Vercel) — FIX
+🔥 Cambiar canal dinámico
 
-## Formato del request
+Reemplazá esto:
 
-Debe enviar exactamente este JSON:
+this.ablyChannelName = "propiedades";
+✔ POR ESTO:
+this.ablyChannelName = "propiedades_" + this.sessionId;
+🔥 initAbly corregido:
+this.ably = new Ably.Realtime(this.ablyKey);
 
-```json
-{
-  "body": {
-    "data": {
-      "from": "demo-user",
-      "body": "mensaje del usuario"
-    }
+this.channel = this.ably.channels.get(
+  "propiedades_" + this.sessionId
+);
+
+this.channel.subscribe((msg) => {
+  console.log("RECIBIDO:", msg.data);
+
+  const data = msg.data;
+
+  let replyText = "";
+
+  if (typeof data.body === "string") {
+    replyText = data.body;
+  } else if (data.text) {
+    replyText = data.text;
+  } else {
+    replyText = JSON.stringify(data);
   }
-}
-```
 
-## Persistencia de conversación
+  this.addMessage("assistant", replyText);
+});
+⚙️ 2. FRONTEND → ENVIAR A N8N
 
-Mi workflow de n8n utiliza:
+Acá mandás el sessionId:
 
-```javascript
-body.data.from
-```
-
-como identificador de conversación.
-
-Por lo tanto al cargar la página se debe generar un sessionId y almacenarlo en localStorage:
-
-```javascript
-let sessionId = localStorage.getItem('csfi-session-id');
-
-if (!sessionId) {
-  sessionId = 'demo-' + crypto.randomUUID();
-  localStorage.setItem('csfi-session-id', sessionId);
-}
-```
-
-Y todos los mensajes enviados deben utilizar:
-
-```javascript
-from: sessionId
-```
-
-De esta manera n8n podrá recordar la conversación.
-
-## Formato de respuesta
-
-El workflow devolverá:
-
-```json
-{
-  "reply": "respuesta del bot"
-}
-```
-
-El frontend debe leer:
-
-```javascript
-response.reply
-```
-
-y mostrarlo en el chat.
-
-## Interfaz
-
-Crear una interfaz moderna inspirada en ChatGPT.
-
-### Header
-
-Título:
-
-```text
-🤖 Sofía - CSFI Propiedades
-```
-
-Subtítulo:
-
-```text
-Asistente virtual inmobiliario
-```
-
-### Chat
-
-* Mensajes del usuario a la derecha.
-* Mensajes del bot a la izquierda.
-* Burbujas modernas.
-* Scroll automático.
-* Responsive.
-* Indicador:
-
-```text
-Sofía está escribiendo...
-```
-
-mientras espera la respuesta.
-
-### Input
-
-* Textarea.
-* Enter envía mensaje.
-* Shift + Enter agrega salto de línea.
-* Botón Enviar.
-
-## Persistencia local
-
-Guardar historial de mensajes en localStorage.
-
-Formato:
-
-```json
-[
-  {
-    "role":"assistant",
-    "text":"Hola"
-  },
-  {
-    "role":"user",
-    "text":"Busco una casa"
-  }
-]
-```
-
-Al recargar la página debe restaurarse la conversación.
-
-## Mensaje inicial
-
-Si no existe historial mostrar automáticamente:
-
-```text
-🤖 Hola, soy Sofía, asistente virtual de CSFI Propiedades. ¿Qué propiedad estás buscando?
-```
-
-## Arquitectura
-
-Implementar una clase:
-
-```javascript
-class ChatWidget
-```
-
-con métodos:
-
-```javascript
-sendMessage()
-addMessage()
-renderTypingIndicator()
-saveConversation()
-loadConversation()
-```
-
-## Estilos
-
-Color principal:
-
-```css
-#0f172a
-```
-
-Color secundario:
-
-```css
-#2563eb
-```
-
-Mensajes usuario:
-
-```css
-#2563eb
-```
-
-Mensajes asistente:
-
-```css
-#f3f4f6
-```
-
-Fondo:
-
-```css
-#ffffff
-```
-
-## Compatibilidad futura
-
-Todo el chat debe estar contenido dentro de:
-
-```html
-<div id="csfi-chat-root"></div>
-```
-
-Todos los estilos deben tener prefijo:
-
-```css
-csfi-chat-
-```
-
-Ejemplos:
-
-```css
-.csfi-chat-container
-.csfi-chat-header
-.csfi-chat-message
-.csfi-chat-user
-.csfi-chat-assistant
-.csfi-chat-input
-.csfi-chat-send
-```
-
-No utilizar estilos globales para evitar conflictos con WordPress.
-
-## Importante
-
-El código debe quedar preparado para que más adelante pueda reutilizarse como:
-
-* Widget flotante para WordPress.
-* Widget embebible mediante script.
-* Demo standalone.
-
-Generar el archivo HTML completo listo para copiar y ejecutar.
+body: JSON.stringify({
+  from: this.sessionId,
+  text: text
+})
