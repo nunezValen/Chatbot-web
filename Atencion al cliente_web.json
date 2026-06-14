@@ -1,0 +1,495 @@
+{
+  "name": "Atencion al cliente",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/whatsapp",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1136,
+        144
+      ],
+      "id": "2c6feaf5-9919-4469-8595-4861cd9ac74c",
+      "name": "Recibo mensaje",
+      "webhookId": "5fb06164-da2f-4a40-8f9b-69a8fae06660"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.output;\n\nconst cleaned = text\n  .replace(\"```json\", \"\")\n  .replace(\"```\", \"\")\n  .trim();\n\nreturn [\n  {\n    json: JSON.parse(cleaned)\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        144
+      ],
+      "id": "9c98c650-5be0-42f4-bb6c-79c76a43c268",
+      "name": "Lo paso a json limpio"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        368
+      ],
+      "id": "4ce99913-b6cf-49b4-bf55-7c6a67b83a37",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "wtzL8xnXmVLaBUZr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.data.from }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -784,
+        368
+      ],
+      "id": "17141c55-9117-4125-9bfc-17efeb738a05",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "PLDCAANiKameaWpJ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Informacion de CSFI",
+        "url": "https://docs.google.com/document/d/15ovLVWPe3zeS9bjvf3hTQ3oEMLMI6o-0C1-bWFsuWYg/export?format=txt",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -656,
+        368
+      ],
+      "id": "8ce2392c-bdf4-4af6-9a83-63811c0f928d",
+      "name": "Informacion de CSFI"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.conversation_type }}",
+                    "rightValue": "enviar_mensaje",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "6577389d-2f8d-406d-ada8-a75cb0465318"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ef49cce5-b2c5-41f8-846f-7a54612d5b14",
+                    "leftValue": "={{ $json.conversation_type }}",
+                    "rightValue": "consulta_propiedades",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        144
+      ],
+      "id": "24cd458d-b883-4545-ae7e-49af30d1217f",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT *\nFROM propiedades\nWHERE 1=1\nAND (\n  '{{ $json.data.tipo_propiedad }}' = ''\n  OR tipo_propiedad = '{{ $json.data.tipo_propiedad }}'\n)\nAND (\n  '{{ $json.data.locacion }}' = ''\n  OR locacion = '{{ $json.data.locacion }}'\n)\nAND (\n  {{ $json.data.precio_usd || 0 }} = 0\n  OR precio_usd <= {{ $json.data.precio_usd || 0 }}\n)\nAND (\n  {{ $json.data.metros_cuadrados || 0 }} = 0\n  OR metros_cuadrados >= {{ $json.data.metros_cuadrados || 0 }}\n)\nAND (\n    '{{ $json.data.operacion }}' = ''\n    OR '{{ $json.data.operacion }}' IS NULL\n    OR operacion = '{{ $json.data.operacion }}'\n)\nORDER BY precio_usd ASC\nLIMIT 10;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        336
+      ],
+      "id": "0d53103c-ae84-4e4d-88f5-2c013226c06e",
+      "name": "Execute a SQL query",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "PLDCAANiKameaWpJ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const propiedades = $input.all();\n\nlet mensaje = \"🏠 Encontré las siguientes propiedades:\\n\\n\";\n\nfor (const item of propiedades) {\n  const p = item.json;\n\n  mensaje += `📍 ${p.titulo}\\n`;\n  mensaje += `🏡 Tipo: ${p.tipo_propiedad}\\n`;\n  mensaje += `📌 Ubicación: ${p.locacion}\\n`;\n  mensaje += `📐 ${p.metros_cuadrados} m²\\n`;\n  mensaje += `💰 USD ${p.precio_usd}\\n`;\n  mensaje += `📝 ${p.descripcion}\\n`;\n  mensaje += `🔗 ${p.url}\\n\\n`;\n}\n\nmensaje += \"Si te interesa alguna propiedad puedo brindarte más información.\";\n\nreturn [{\n  json: {\n    body: mensaje\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        240
+      ],
+      "id": "26502c9a-c5ae-47d2-941a-44b25cd5fda7",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ultramsg.com/instance164334/messages/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"token\": \"361bgoubwu6ken42\",\n  \"to\": \"{{ $('Recibo mensaje').item.json.body.data.from }}\",\n  \"body\": {{ JSON.stringify($json.body) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        240
+      ],
+      "id": "cbda1119-d479-4f2d-9b93-c42ed45f29d2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "68d654e4-bdbc-4809-8267-6cd6858d69c6",
+              "leftValue": "={{ $json.titulo }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        336
+      ],
+      "id": "fb91c9e6-5f3d-4da0-b1c5-cb93109fcfec",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ultramsg.com/instance164334/messages/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"token\": \"361bgoubwu6ken42\",\n  \"to\": \"{{ $('Recibo mensaje').item.json.body.data.from }}\",\n  \"body\": \"Actualmente no encontré propiedades con esos criterios. Voy a guardar tu búsqueda y te avisaré automáticamente cuando ingrese una propiedad compatible. Le gustaria consultar otra cosa?\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        432
+      ],
+      "id": "43cd00c5-149d-4681-9733-c7e7fdd7c8e7",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO alertas_busqueda (\n    telefono,\n    tipo_propiedad,\n    locacion,\n    metros_cuadrados,\n    precio_usd,\n    operacion\n)\nVALUES (\n    '{{ $('Recibo mensaje').item.json.body.data.from }}',\n    '{{ $('Lo paso a json limpio').item.json.data.tipo_propiedad }}',\n    '{{ $('Lo paso a json limpio').item.json.data.locacion }}',\n    {{ $('Lo paso a json limpio').item.json.data.metros_cuadrados || 'NULL' }},\n    {{ $('Lo paso a json limpio').item.json.data.precio_usd || 'NULL' }},\n    '{{ $('Lo paso a json limpio').item.json.data.operacion }}'\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        672,
+        432
+      ],
+      "id": "401ea4ad-cc7c-4ef3-a656-35d616da2481",
+      "name": "Guardar consulta",
+      "credentials": {
+        "postgres": {
+          "id": "PLDCAANiKameaWpJ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://rest.ably.io/channels/propiedades_user_{{ $('Recibo mensaje').item.json.body.data.from }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"message\",\n  \"data\": {\n    \"text\": \"{{$json.reply}}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        -48
+      ],
+      "id": "821b35b3-5f6c-4630-ad4b-43f7d4ec499f",
+      "name": "Mandar mensaje",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Po6NOjwQDLmjiFpN",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ultramsg.com/instance164334/messages/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"token\": \"361bgoubwu6ken42\",\n  \"to\": \"{{ $('Recibo mensaje').item.json.body.data.from }}\",\n  \"body\": \"Genial! Dame un segundo y comenzare a buscar las propiedades...\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        144
+      ],
+      "id": "245e3676-c3b8-4aeb-88b7-add1c765bb4d",
+      "name": "Avisar que voy a buscar"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Sos un asistente de WhatsApp para una inmobiliaria llamada CSFI Propiedades.\nCuando la conversación comienza debes presentarte como asistente virtual de CSFI Propiedades utilizando un emoji de robot 🤖.\n\nSi el cliente consulta información sobre CSFI Propiedades, dirección, teléfonos, email, servicios, experiencia o cualquier dato institucional, debes utilizar las herramientas disponibles para obtener esa información. Nunca inventes datos de la empresa.\n\n\nTu trabajo es ayudar principalmente a:\n\n* Buscar propiedades.\n* Responder consultas sobre propiedades.\n* Responder consultas generales sobre CSFI Propiedades.\n* Coordinar visitas.\n* Informar datos de contacto y ubicación.\n\nLos parámetros disponibles para la búsqueda son:\n\n* operacion\n* tipo_propiedad\n* locacion\n* metros_cuadrados\n* precio_usd\n\nTipos de operación válidos:\n\n* venta\n* alquiler\n\nTipos de propiedad válidos:\n\n* casa\n* departamento\n* duplex\n* galpon\n* local comercial\n* terreno\n\nLocaciones válidas:\n\n* Alta Córdoba\n* Córdoba Capital\n* Mendiolaza\n* Paraguay\n* Provincia de Córdoba\n* Río Ceballos\n* Valle de Calamuchita\n* Zona Norte\n\nReglas:\n\n* Siempre responde en español.\n* Sé breve, cordial y profesional.\n* No inventes propiedades.\n* No inventes información de CSFI.\n* Si el cliente pregunta por la empresa, utiliza las herramientas.\n* Los precios deben devolverse únicamente como números.\n* Los metros cuadrados deben devolverse únicamente como números.\n* Extrae todos los parámetros que encuentres en el mensaje.\n* El cliente puede enviar los parámetros en cualquier orden.\n* El cliente puede enviar un único dato faltante en un mensaje posterior.\n* Debes interpretar que los nuevos mensajes completan la búsqueda anterior.\n* Nunca obligues al cliente a repetir toda la búsqueda.\n* Si falta algún dato importante para mejorar la búsqueda, indícalo claramente.\n* Los metros cuadrados son opcionales.\n* Se puede realizar una búsqueda aunque no existan metros cuadrados.\n* Se puede buscar únicamente por ubicación.\n* Se puede buscar únicamente por precio.\n* Se puede buscar únicamente por tipo de propiedad.\n* Se puede buscar únicamente por operación.\n* Se puede buscar por combinación de cualquier parámetro disponible.\n* Si el cliente menciona \"alquiler\", \"alquilar\", \"rentar\", \"alquilo\", la operación es \"alquiler\".\n* Si el cliente menciona \"venta\", \"comprar\", \"compra\", \"comprar una propiedad\", \"quiero comprar\", la operación es \"venta\".\n* Si el cliente hace una consulta de propiedades y ya existen criterios suficientes para buscar, no hace falta realizar preguntas adicionales. El minimo de criterios para buscar es tipo de operacion y lugar.\n* Si el cliente hace consulta de propiedad no hace falta que respondas texto explicativo, solo devuelve los parámetros necesarios.\n* Si no se especifica la operación, deja el campo operacion vacío.\n* Si no se especifica un parámetro, déjalo vacío o en null según corresponda.\n\nDebes considerar que ya existe memoria de conversación y que los parámetros obtenidos anteriormente pueden seguir siendo válidos.\n\nEjemplos válidos:\n\n\"Busco una casa en Mendiolaza\"\n\n\"Quiero alquilar un departamento en Córdoba Capital\"\n\n\"Quiero comprar una casa\"\n\n\"Propiedades por menos de 100000 dólares\"\n\n\"Terrenos en Zona Norte\"\n\n\"Casas en Córdoba Capital por menos de 1000000 dólares\"\n\n\"Departamentos en Alta Córdoba\"\n\n\"Hasta 200000 dólares\"\n\n\"De 150 metros cuadrados\"\n\nSi el cliente proporciona información suficiente para realizar una búsqueda, utiliza:\n\n\"conversation_type\": \"consulta_propiedades\"\n\nSi el cliente está saludando, conversando, consultando por la empresa o realizando cualquier otra consulta que no implique buscar propiedades, utiliza:\n\n\"conversation_type\": \"enviar_mensaje\"\n\nTu respuesta SIEMPRE debe ser JSON válido con esta estructura:\n\n{\n\"conversation_type\": \"enviar_mensaje\",\n\"reply\": \"mensaje para el cliente\",\n\"data\": {\n\"operacion\": \"\",\n\"tipo_propiedad\": \"\",\n\"locacion\": \"\",\n\"metros_cuadrados\": null,\n\"precio_usd\": null\n}\n}\n\nEjemplo 1:\n\nUsuario:\nBusco una casa en Mendiolaza\n\nRespuesta:\n\n{\n\"conversation_type\": \"enviar_mensaje\",\n\"reply\": \"Genial, puedo ayudarte con eso, me podrias proporsionar más detalles o solo quieres ver todas las casas disponibless en Mendiolza\",\n\"data\": {\n\"operacion\": \"\",\n\"tipo_propiedad\": \"casa\",\n\"locacion\": \"Mendiolaza\",\n\"metros_cuadrados\": null,\n\"precio_usd\": null\n}\n}\n\nEjemplo 2:\n\nUsuario:\nCasas en Córdoba Capital por menos de 1000000 dólares\n\nRespuesta:\n\n{\n\"conversation_type\": \"consulta_propiedades\",\n\"reply\": \"\",\n\"data\": {\n\"operacion\": \"\",\n\"tipo_propiedad\": \"casa\",\n\"locacion\": \"Córdoba Capital\",\n\"metros_cuadrados\": null,\n\"precio_usd\": 1000000\n}\n}\n\nEjemplo 3:\n\nUsuario:\nQuiero alquilar un departamento en Alta Córdoba\n\nRespuesta:\n\n{\n\"conversation_type\": \"consulta_propiedades\",\n\"reply\": \"\",\n\"data\": {\n\"operacion\": \"alquiler\",\n\"tipo_propiedad\": \"departamento\",\n\"locacion\": \"Alta Córdoba\",\n\"metros_cuadrados\": null,\n\"precio_usd\": null\n}\n}\n\nEjemplo 4:\n\nUsuario:\n¿Dónde están ubicados?\n\nRespuesta:\n\n{\n\"conversation_type\": \"enviar_mensaje\",\n\"reply\": \"mensaje generado utilizando la herramienta correspondiente\",\n\"data\": {\n\"operacion\": \"\",\n\"tipo_propiedad\": \"\",\n\"locacion\": \"\",\n\"metros_cuadrados\": null,\n\"precio_usd\": null\n}\n\n}\nEjemplo 5:\n\nUsuario:\nQuiero comprar una casa\n\nRespuesta:\n\n{\n\"conversation_type\": \"enviar_mensaje\",\n\"reply\": \"Genial, podrias indicarme [parametros], para ayudarte mejor\",\n\"data\": {\n\"operacion\": \"\",\n\"tipo_propiedad\": \"\",\n\"locacion\": \"\",\n\"metros_cuadrados\": null,\n\"precio_usd\": null\n}\n}\nMensaje del cliente:\n\n{{ $json.body.data.body }}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -864,
+        144
+      ],
+      "id": "3e055855-1998-4801-bcee-977e701d56ef",
+      "name": "AI Agent"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Recibo mensaje": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lo paso a json limpio": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Informacion de CSFI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Mandar mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar que voy a buscar",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Guardar consulta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Lo paso a json limpio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mandar mensaje": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "025d0c37-73c0-4d4c-84a8-1e6911c77ee9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1528cf5208dfddd94cc07c74695ae9dc82ea1341f35e852deb5c1e658f25e0c1"
+  },
+  "id": "LMFatFrGDnH8hn84",
+  "tags": []
+}
