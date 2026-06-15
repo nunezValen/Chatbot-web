@@ -4,162 +4,269 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sofía - CFSI Propiedades</title>
-    <!-- Librería de Ably -->
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
     <style>
-        /* Scoped Styles for CSFI Chat - DARK THEME */
-        #csfi-chat-root {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            color: #f1f5f9;
-            max-width: 800px;
-            margin: 20px auto;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 90vh;
-            background: #0f172a;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5);
-        }
+        *, *::before, *::after { box-sizing: border-box; }
 
-        .csfi-chat-header {
-            background-color: #1e293b;
-            color: #ffffff;
-            padding: 16px 20px;
-            border-bottom: 1px solid #334155;
-        }
-
-        .-chat-header h1 {
+        body {
             margin: 0;
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-
-        .-chat-header p {
-            margin: 4px 0 0 0;
-            font-size: 0.875rem;
-            opacity: 0.8;
-        }
-
-        .-chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            background-color: #0f172a;
-        }
-
-        .-chat-message {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            word-wrap: break-word;
-            position: relative;
-        }
-
-        .csfi-chat-assistant {
-            align-self: flex-start;
-            background-color: #334155;
-            color: #f1f5f9;
-            border-bottom-left-radius: 4px;
-        }
-
-        .csfi-chat-user {
-            align-self: flex-end;
-            background-color: #2563eb;
-            color: #ffffff;
-            border-bottom-right-radius: 4px;
-        }
-
-        .csfi-chat-typing {
-            font-style: italic;
-            font-size: 0.85rem;
-            color: #94a3b8;
-            margin-bottom: 8px;
-            display: none;
-        }
-
-        .csfi-chat-input-area {
-            padding: 16px;
-            border-top: 1px solid #334155;
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-            background-color: #1e293b;
-        }
-
-        .csfi-chat-input {
-            flex: 1;
-            border: 1px solid #475569;
-            background-color: #0f172a;
-            color: #f1f5f9;
-            border-radius: 8px;
-            padding: 10px 12px;
-            font-family: inherit;
-            font-size: 0.95rem;
-            resize: none;
-            max-height: 150px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .csfi-chat-input::placeholder {
-            color: #64748b;
-        }
-
-        .csfi-chat-input:focus {
-            border-color: #2563eb;
-        }
-
-        .csfi-chat-send {
-            background-color: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
+            padding: 0;
+            min-height: 100vh;
+            background: #0b1120;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .csfi-chat-send:hover {
-            background-color: #1d4ed8;
+        #csfi-chat-root {
+            width: 100%;
+            max-width: 780px;
+            height: 90vh;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #111827;
+            border: 1px solid #1f2d42;
         }
 
-        .csfi-chat-send:disabled {
-            background-color: #475569;
-            cursor: not-allowed;
+        /* ── Header ── */
+        .csfi-chat-header {
+            background: #131f2e;
+            border-bottom: 1px solid #1f2d42;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
         }
 
-        /* Scrollbar styling */
-        .csfi-chat-container::-webkit-scrollbar {
+        .csfi-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .csfi-header-text {
+            flex: 1;
+        }
+
+        .csfi-header-text h1 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: #f1f5f9;
+            letter-spacing: -0.01em;
+        }
+
+        .csfi-header-text p {
+            margin: 3px 0 0;
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .csfi-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #22c55e;
+            display: inline-block;
+        }
+
+        /* ── Messages ── */
+        .csfi-chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 20px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: #0f172a;
+            scroll-behavior: smooth;
+        }
+
+        .csfi-msg-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .csfi-msg-row.csfi-user-row {
+            flex-direction: row-reverse;
+        }
+
+        .csfi-mini-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+            border: 1px solid #334155;
+        }
+
+        .csfi-bubble-wrap {
+            display: flex;
+            flex-direction: column;
+            max-width: 72%;
+        }
+
+        .csfi-user-row .csfi-bubble-wrap {
+            align-items: flex-end;
+        }
+
+        .csfi-chat-message {
+            padding: 10px 14px;
+            font-size: 14px;
+            line-height: 1.55;
+            word-break: break-word;
+            position: relative;
+        }
+
+        .csfi-chat-assistant {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 16px 16px 16px 4px;
+            border: 1px solid #334155;
+        }
+
+        .csfi-chat-user {
+            background: #2563eb;
+            color: #ffffff;
+            border-radius: 16px 16px 4px 16px;
+        }
+
+        .csfi-msg-time {
+            font-size: 10px;
+            color: #475569;
+            margin-top: 4px;
+            padding: 0 4px;
+        }
+
+        .csfi-user-row .csfi-msg-time {
+            text-align: right;
+        }
+
+        /* ── Typing indicator ── */
+        #csfi-chat-typing-indicator {
+            display: none;
+            padding: 0 20px 10px;
+            flex-shrink: 0;
+        }
+
+        .csfi-typing-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .csfi-typing-bubble {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px 16px 16px 4px;
+            padding: 10px 14px;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .csfi-typing-dot {
             width: 6px;
-        }
-        .csfi-chat-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .csfi-chat-container::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 3px;
-        }
-        .csfi-chat-container::-webkit-scrollbar-thumb:hover {
+            height: 6px;
+            border-radius: 50%;
             background: #64748b;
+            animation: csfi-bounce 1.3s infinite;
         }
 
+        .csfi-typing-dot:nth-child(2) { animation-delay: 0.18s; }
+        .csfi-typing-dot:nth-child(3) { animation-delay: 0.36s; }
+
+        @keyframes csfi-bounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-5px); opacity: 1; }
+        }
+
+        /* ── Input area ── */
+        .csfi-chat-input-area {
+            padding: 12px 16px;
+            border-top: 1px solid #1f2d42;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            background: #131f2e;
+            flex-shrink: 0;
+        }
+
+        .csfi-chat-input {
+            flex: 1;
+            border: 1px solid #2d3f55;
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 22px;
+            padding: 10px 16px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: none;
+            max-height: 120px;
+            outline: none;
+            line-height: 1.45;
+            transition: border-color 0.15s;
+        }
+
+        .csfi-chat-input::placeholder { color: #475569; }
+
+        .csfi-chat-input:focus { border-color: #3b82f6; }
+
+        .csfi-chat-send {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s, transform 0.1s;
+        }
+
+        .csfi-chat-send:hover { background: #1d4ed8; }
+        .csfi-chat-send:active { transform: scale(0.92); }
+        .csfi-chat-send:disabled { background: #2d3f55; cursor: not-allowed; }
+
+        /* ── Scrollbar ── */
+        .csfi-chat-container::-webkit-scrollbar { width: 4px; }
+        .csfi-chat-container::-webkit-scrollbar-track { background: transparent; }
+        .csfi-chat-container::-webkit-scrollbar-thumb { background: #2d3f55; border-radius: 2px; }
+        .csfi-chat-container::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* ── Mobile ── */
         @media (max-width: 640px) {
+            body { align-items: flex-start; background: #0f172a; }
             #csfi-chat-root {
                 margin: 0;
                 height: 100vh;
+                height: 100dvh;
                 border-radius: 0;
-                max-width: none;
+                max-width: 100%;
+                border: none;
             }
         }
     </style>
@@ -168,27 +275,39 @@
 
     <div id="csfi-chat-root">
         <header class="csfi-chat-header">
-            <h1>🤖 Sofía - CFSI Propiedades</h1>
-            <p>Asistente virtual inmobiliario</p>
+            <div class="csfi-avatar" aria-hidden="true">🤖</div>
+            <div class="csfi-header-text">
+                <h1>Sofía · CFSI Propiedades</h1>
+                <p><span class="csfi-status-dot"></span> En línea · Asistente virtual</p>
+            </div>
         </header>
 
-        <main class="csfi-chat-container" id="csfi-chat-messages">
-            <!-- Messages will be injected here -->
-        </main>
+        <main class="csfi-chat-container" id="csfi-chat-messages"></main>
 
-        <div id="csfi-chat-typing-indicator" class="csfi-chat-typing" style="padding: 0 20px;">
-            Sofía está escribiendo...
+        <div id="csfi-chat-typing-indicator">
+            <div class="csfi-typing-row">
+                <div class="csfi-mini-avatar" aria-hidden="true">🤖</div>
+                <div class="csfi-typing-bubble">
+                    <span class="csfi-typing-dot"></span>
+                    <span class="csfi-typing-dot"></span>
+                    <span class="csfi-typing-dot"></span>
+                </div>
+            </div>
         </div>
 
         <footer class="csfi-chat-input-area">
-            <textarea 
-                class="csfi-chat-input" 
-                id="csfi-chat-input" 
-                placeholder="Escribe tu mensaje aquí..." 
+            <textarea
+                class="csfi-chat-input"
+                id="csfi-chat-input"
+                placeholder="Escribe un mensaje..."
                 rows="1"
+                aria-label="Escribe un mensaje"
             ></textarea>
-            <button class="csfi-chat-send" id="csfi-chat-send">
-                Enviar
+            <button class="csfi-chat-send" id="csfi-chat-send" aria-label="Enviar mensaje">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
             </button>
         </footer>
     </div>
@@ -196,27 +315,31 @@
     <script>
         class ChatWidget {
             constructor() {
-                // CONFIGURACIÓN
                 this.ablyKey = "wVhGgQ.vcXxIQ:xqZvl54XUTtKf7I2S0HxWiNIcF_uBvTtamgTDBVXvic";
                 this.endpoint = 'https://n8n-vete.onrender.com/webhook/whatsapp';
-                
+
                 this.messagesContainer = document.getElementById('csfi-chat-messages');
                 this.inputField = document.getElementById('csfi-chat-input');
                 this.sendButton = document.getElementById('csfi-chat-send');
                 this.typingIndicator = document.getElementById('csfi-chat-typing-indicator');
-                
+
                 this.history = [];
                 this.sessionId = this.initSession();
-                
+
                 this.initAbly();
                 this.initEventListeners();
                 this.loadConversation();
-                
+
                 if (this.history.length === 0) {
                     this.addInitialMessage();
                 } else {
                     this.renderHistory();
                 }
+            }
+
+            getTime() {
+                const d = new Date();
+                return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
             }
 
             initSession() {
@@ -231,11 +354,7 @@
             initAbly() {
                 try {
                     this.ably = new Ably.Realtime(this.ablyKey);
-
-                    // ARQUITECTURA CORRECTA: Canal dinámico por usuario
-                    this.channel = this.ably.channels.get(
-                        "propiedades_user_" + this.sessionId
-                    );
+                    this.channel = this.ably.channels.get("propiedades_user_" + this.sessionId);
 
                     this.channel.subscribe((msg) => {
                         console.log("RECIBIDO:", msg.data);
@@ -265,7 +384,7 @@
 
             initEventListeners() {
                 this.sendButton.addEventListener('click', () => this.sendMessage());
-                
+
                 this.inputField.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -285,40 +404,33 @@
 
                 this.inputField.value = '';
                 this.inputField.style.height = 'auto';
-                
+
                 this.addMessage('user', text);
                 this.renderTypingIndicator(true);
+                this.sendButton.disabled = true;
 
                 try {
-                    // Enviamos a n8n con el formato simplificado
                     await fetch(this.endpoint, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            data: {
-                                from: this.sessionId,
-                                body: text
-                            }
-                        })
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: { from: this.sessionId, body: text } })
                     });
-
                 } catch (error) {
                     console.error('Chat Error:', error);
                     this.renderTypingIndicator(false);
-                    this.addMessage('assistant', 'Hubo un problema al enviar el mensaje.');
+                    this.addMessage('assistant', 'Hubo un problema al enviar el mensaje. Por favor, intentá de nuevo.');
+                } finally {
+                    this.sendButton.disabled = false;
                 }
             }
 
             addMessage(role, text) {
-                // Evitar duplicados por race conditions
                 if (role === 'assistant' && this.history.length > 0) {
                     const lastMsg = this.history[this.history.length - 1];
                     if (lastMsg.role === 'assistant' && lastMsg.text === text) return;
                 }
 
-                const messageObj = { role, text };
+                const messageObj = { role, text, time: this.getTime() };
                 this.history.push(messageObj);
                 this.renderMessage(messageObj);
                 this.saveConversation();
@@ -326,11 +438,33 @@
             }
 
             renderMessage(msg) {
-                const messageElement = document.createElement('div');
-                messageElement.classList.add('csfi-chat-message');
-                messageElement.classList.add(msg.role === 'user' ? 'csfi-chat-user' : 'csfi-chat-assistant');
-                messageElement.innerHTML = msg.text.replace(/\n/g, '<br>');
-                this.messagesContainer.appendChild(messageElement);
+                const row = document.createElement('div');
+                row.className = 'csfi-msg-row' + (msg.role === 'user' ? ' csfi-user-row' : '');
+
+                const miniAvatar = document.createElement('div');
+                miniAvatar.className = 'csfi-mini-avatar';
+                miniAvatar.setAttribute('aria-hidden', 'true');
+                miniAvatar.textContent = msg.role === 'user' ? '👤' : '🤖';
+
+                const bubble = document.createElement('div');
+                bubble.classList.add('csfi-chat-message');
+                bubble.classList.add(msg.role === 'user' ? 'csfi-chat-user' : 'csfi-chat-assistant');
+                bubble.innerHTML = msg.text.replace(/\n/g, '<br>');
+
+                const time = document.createElement('div');
+                time.className = 'csfi-msg-time';
+                time.textContent = msg.time || this.getTime();
+
+                const wrap = document.createElement('div');
+                wrap.className = 'csfi-bubble-wrap';
+                wrap.appendChild(bubble);
+                wrap.appendChild(time);
+
+                if (msg.role !== 'user') row.appendChild(miniAvatar);
+                row.appendChild(wrap);
+                if (msg.role === 'user') row.appendChild(miniAvatar);
+
+                this.messagesContainer.appendChild(row);
             }
 
             renderTypingIndicator(show) {
@@ -364,7 +498,7 @@
             }
 
             addInitialMessage() {
-                const initialText = '🤖 Hola, soy Sofía, asistente virtual de CFSI Propiedades. ¿Qué propiedad estás buscando?';
+                const initialText = 'Hola, soy Sofía 👋 Asistente virtual de CFSI Propiedades. ¿Qué tipo de propiedad estás buscando?';
                 this.addMessage('assistant', initialText);
             }
         }
